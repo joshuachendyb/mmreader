@@ -1,0 +1,336 @@
+/* MermaidReader 样式表 */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+body.dark {
+    background-color: #2d3748;
+    color: #e2e8f0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header {
+    background: #fff;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #e2e2e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header.light h1 {
+    color: #2c3e50;
+}
+
+.header.dark h1 {
+    color: #e2e8f0;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.version {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 300;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #e2e2e2;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.sidebar.light {
+    background: #fff;
+    border-right: 1px solid #e2e2e2;
+}
+
+.sidebar.dark {
+    background: #4a5568;
+    border-right: 1px solid #2d3748;
+}
+
+.file-input {
+    margin-bottom: 1.5rem;
+}
+
+.file-input button {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    border: none;
+    border-radius: 4px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.3s ease;
+}
+
+.file-input button:hover {
+    background: #2980b9;
+}
+
+.recent-files h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.recent-file-item {
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.recent-file-item:hover {
+    background: #e9ecef;
+    border-color: #3498db;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-container, .preview-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-header, .preview-header {
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e2e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-header.light, .preview-header.light {
+    background: #fff;
+    border-bottom: 1px solid #e2e2e2;
+}
+
+.editor-header.dark, .preview-header.dark {
+    background: #4a5568;
+    border-bottom: 1px solid #2d3748;
+}
+
+.editor-header span, .preview-header span {
+    font-weight: 600;
+    color: #555;
+}
+
+.editor-actions, .preview-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.editor-actions button, .preview-actions button {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background: #ecf0f1;
+    color: #333;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.editor-actions button:hover, .preview-actions button:hover {
+    background: #bdc3c7;
+    transform: translateY(-1px);
+}
+
+.editor {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.editor:focus {
+    background: #f8f9fa;
+}
+
+.preview {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview.light {
+    background: #fff;
+}
+
+.preview.dark {
+    background: #2d3748;
+}
+
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    flex-direction: column;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 1rem;
+    color: #fff;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .editor, .preview {
+        font-size: 12px;
+    }
+    
+    .header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .header h1 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 180px;
+    }
+    
+    .editor-actions, .preview-actions {
+        flex-wrap: wrap;
+    }
+    
+    .editor, .preview {
+        font-size: 11px;
+        padding: 0.5rem;
+    }
+    
+    .editor-header, .preview-header {
+        padding: 0.5rem;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #e2e2e2;
+    }
+    
+    .content {
+        flex-direction: column;
+    }
+    
+    .editor-container, .preview-container {
+        height: 50%;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .header, .sidebar, .editor-actions, .preview-actions, .loading {
+        display: none !important;
+    }
+    
+    .content {
+        flex-direction: column;
+    }
+    
+    .editor-container, .preview-container {
+        height: auto;
+        flex: none;
+    }
+    
+    .editor, .preview {
+        padding: 0;
+        background: white !important;
+        color: black !important;
+    }
+}

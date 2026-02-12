@@ -1,0 +1,41 @@
+# MermaidReader .gitignore
+
+# 编译和构建产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go编译产物
+bin/
+build/
+
+# Rust编译产物
+target/
+
+# 依赖目录
+node_modules/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.log
+
+# 发布产物
+release*/
+*.zip
+*.tar
+*.tar.gz
+
+# 本地备份
+backup*/
+*.backup.*
+*.bak
+
+# 临时文件
+*.tmp
+*.swp
+*~

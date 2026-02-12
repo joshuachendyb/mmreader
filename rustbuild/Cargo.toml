@@ -1,0 +1,24 @@
+[package]
+name = "mermaidreader"
+version = "1.0.0"
+edition = "2021"
+authors = ["MermaidReader Team"]
+description = "Mermaid图表阅读器 - Rust + WebView2 桌面应用"
+license = "MIT"
+
+[dependencies]
+wry = "0.24"
+rust-embed = "8"
+dirs = "5"
+anyhow = "1"
+
+[[bin]]
+name = "mermaidreader"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

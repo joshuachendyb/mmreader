@@ -1,0 +1,40 @@
+        // 完整的Mermaid代码修复函数 - 与app.html完全一致
+        function fixMermaidCode(code) {
+            let fixedCode = code;
+            
+            // 1. 处理©符号 - 只在方括号内部处理
+            // Footer[底部版权信息 (c) 2026...] 中的 (c) 需要移除
+            if (fixedCode.includes('©') || fixedCode.includes('(C)') || fixedCode.includes('(c)')) {
+                // 只匹配方括号内部的情况：[... (c) ...] 或 [... © ...]
+                fixedCode = fixedCode.replace(/\[([^\]]*?)\s*\(\s*[cC©]\s*\)\s*([^\]]*?)\]/g, (match, before, after) => {
+                    // 移除(c)或(C)或©，保留其他内容
+                    const cleaned = before + ' ' + after;
+                    return '[' + cleaned.trim() + ']';
+                });
+            }
+            
+            // 2. 处理特殊破折号
+            if (/[—–]/.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/[—–]/g, '---');
+            }
+            
+            // 3. 修复 [[...]] 双层方括号语法 - Mermaid 10.x 不支持
+            if (/\[\[/.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/\[\[([^\]]+?)\]\](?!\])/g, '["$1"]');
+            }
+            
+            // 4. 移除br标签
+            if (/<br\s*\/?>/i.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/<br\s*\/?>/gi, ' ');
+            }
+            
+            // 5. 处理方括号文本中未转义的引号
+            fixedCode = fixedCode.replace(/(\w+)\[("|"|"|"|'|')(.*?)\2\]/g, (match, id, quote, text) => {
+                if (text.includes(quote)) {
+                    return `${id}[${text.replace(new RegExp(quote, 'g'), '')}]`;
+                }
+                return match;
+            });
+            
+            return fixedCode;
+        }

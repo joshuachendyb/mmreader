@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MermaidReader - 图表阅读器</title>
+    <link rel="stylesheet" href="/static/css/mermaid.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/mermaid.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>MermaidReader</h1>
+            <div class="version">v<span id="app-version">1.0.0</span></div>
+        </header>
+
+        <main class="main-content">
+            <div class="sidebar">
+                <div class="file-input">
+                    <input type="file" id="file-input" accept=".md,.txt" style="display: none;">
+                    <button id="open-file-btn">打开文件</button>
+                    <button id="reload-btn">重新加载</button>
+                </div>
+                
+                <div class="recent-files">
+                    <h3>最近文件</h3>
+                    <div id="recent-files-list"></div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="editor-container">
+                    <div class="editor-header">
+                        <span id="file-name">未选择文件</span>
+                        <div class="editor-actions">
+                            <button id="theme-toggle">切换主题</button>
+                            <button id="zoom-in">放大</button>
+                            <button id="zoom-out">缩小</button>
+                        </div>
+                    </div>
+                    <div class="editor" id="editor" contenteditable="true">
+                        <!-- 编辑器内容 -->
+                    </div>
+                </div>
+
+                <div class="preview-container">
+                    <div class="preview-header">
+                        <span>预览</span>
+                        <div class="preview-actions">
+                            <button id="refresh-preview">刷新</button>
+                            <button id="export-svg">导出 SVG</button>
+                            <button id="export-png">导出 PNG</button>
+                        </div>
+                    </div>
+                    <div class="preview" id="preview">
+                        <!-- 预览内容 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">加载中...</div>
+    </div>
+
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        // 全局设置
+        const settings = {
+            theme: 'light',
+            fontSize: 14,
+            mermaidTheme: 'default'
+        };
+
+        // 应用设置
+        function applySettings() {
+            document.body.className = settings.theme;
+            document.getElementById('editor').style.fontSize = settings.fontSize + 'px';
+            mermaid.initialize({
+                theme: settings.mermaidTheme
+            });
+            renderPreview();
+        }
+
+        // 渲染预览
+        function renderPreview() {
+            const editor = document.getElementById('editor');
+            const preview = document.getElementById('preview');
+            
+            const content = editor.innerText;
+            const mermaidCode = extractMermaidCode(content);
+            
+            preview.innerHTML = mermaidCode;
+            mermaid.render('mermaid-preview', mermaidCode, function(svgCode) {
+                preview.innerHTML = svgCode;
+            });
+        }
+
+        // 提取Mermaid代码
+        function extractMermaidCode(content) {
+            const regex = /```mermaid([\s\S]*?)```/g;
+            let match;
+            let result = '';
+            
+            while ((match = regex.exec(content)) !== null) {
+                result += match[1] + '\n';
+            }
+            
+            return result.trim() || 'graph TD;A-->B;';
+        }
+
+        // 文件操作
+        function openFile() {
+            document.getElementById('file-input').click();
+        }
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                loadFile(file);
+            }
+        });
+
+        async function loadFile(file) {
+            showLoading(true);
+            
+            try {
+                const content = await file.text();
+                document.getElementById('editor').innerText = content;
+                document.getElementById('file-name').innerText = file.name;
+                renderPreview();
+                saveRecentFile(file.name, content);
+            } catch (error) {
+                console.error('加载文件失败:', error);
+                alert('加载文件失败');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function saveRecentFile(name, content) {
+            let recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+            recentFiles = recentFiles.filter(f => f.name !== name);
+            recentFiles.unshift({ name, content });
+            if (recentFiles.length > 5) {
+                recentFiles = recentFiles.slice(0, 5);
+            }
+            localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
+            updateRecentFiles();
+        }
+
+        function updateRecentFiles() {
+            const recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+            const list = document.getElementById('recent-files-list');
+            list.innerHTML = '';
+            
+            recentFiles.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'recent-file-item';
+                item.textContent = file.name;
+                item.onclick = () => loadRecentFile(file);
+                list.appendChild(item);
+            });
+        }
+
+        function loadRecentFile(file) {
+            document.getElementById('editor').innerText = file.content;
+            document.getElementById('file-name').innerText = file.name;
+            renderPreview();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        // 事件监听
+        document.getElementById('open-file-btn').addEventListener('click', openFile);
+        document.getElementById('reload-btn').addEventListener('click', () => renderPreview());
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            settings.theme = settings.theme === 'light' ? 'dark' : 'light';
+            applySettings();
+        });
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            settings.fontSize = Math.min(settings.fontSize + 2, 24);
+            applySettings();
+        });
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            settings.fontSize = Math.max(settings.fontSize - 2, 10);
+            applySettings();
+        });
+        document.getElementById('refresh-preview').addEventListener('click', renderPreview);
+        document.getElementById('export-svg').addEventListener('click', () => exportFile('image/svg+xml'));
+        document.getElementById('export-png').addEventListener('click', () => exportFile('image/png'));
+
+        function exportFile(type) {
+            const svg = document.querySelector('#preview svg');
+            if (!svg) return;
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = svg.width.baseVal.value;
+            canvas.height = svg.height.baseVal.value;
+            
+            const data = (new XMLSerializer()).serializeToString(svg);
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+                const link = document.createElement('a');
+                link.download = 'mermaid-chart.' + (type === 'image/svg+xml' ? 'svg' : 'png');
+                link.href = canvas.toDataURL(type);
+                link.click();
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRecentFiles();
+            applySettings();
+            
+            // 获取应用版本
+            fetch('/api/version')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('app-version').innerText = data.version;
+                });
+        });
+
+        // 编辑器内容变化时自动更新预览
+        let editorTimer;
+        document.getElementById('editor').addEventListener('input', function() {
+            clearTimeout(editorTimer);
+            editorTimer = setTimeout(renderPreview, 500);
+        });
+    </script>
+</body>
+</html>

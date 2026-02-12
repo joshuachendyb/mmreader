@@ -1,0 +1,29 @@
+
+  {
+    "chartIndex": 10,
+    "errorMessage": "Parse error on line 18:\n...上传文件列表 文件名 、 大小 、 操作(删除/预览)]          \n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'",
+    "codePreview": "graph TB\n    subgraph UpdateDocPage[案件资料更新页]\n        direction TB\n        Breadcrumb[面包屑导航
+首页 > "
+  },
+  {
+    "chartIndex": 12,
+    "errorMessage": "Parse error on line 27:\n...文件列表 文件名 、 上传时间 、 操作(预览/下载)]        Sec\n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'",
+    "codePreview": "graph TB\n    subgraph ContractDetailModal[案件合同详情弹窗]\n        direction TB\n        ModalHeader[弹窗头部]\n "
+  },
+  {
+    "chartIndex": 13,
+    "errorMessage": "Parse error on line 21:\n...模板合同列表 文件名 、 大小 、 操作(删除)]             \n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'",
+    "codePreview": "graph TB\n    subgraph UpdateContractModal[案件合同更新弹窗]\n        direction TB\n        ModalHeader[弹窗头部]\n "
+  },
+  {
+    "chartIndex": 16,
+    "errorMessage": "Parse error on line 41:\n...rList[其他收支列表 日期 、 类型(收入/支出) 、 金额 、 备注] \n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'",
+    "codePreview": "graph TB\n    subgraph UpdateFundModal[案件资金更新弹窗]\n        direction TB\n        ModalHeader[弹窗头部]\n     "
+  },
+  {
+    "chartIndex": 20,
+    "errorMessage": "Parse error on line 9:\n...ard3[角色: 精英律师 - 更多功能(V2.0) - 存储空间: 待定] \n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'",
+    "codePreview": "graph TB\n    subgraph RoleManagePage[角色管理]\n        direction TB\n        Breadcrumb[面包屑导航
+首页 > 管理"
+  }
+]

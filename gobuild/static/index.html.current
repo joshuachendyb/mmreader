@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Reader</title>
+    
+    <!-- 引入本地库 -->
+    <script src="js/mermaid.min.js"></script>
+    <script src="js/marked.min.js"></script>
+    
+    <style>
+        :root {
+            /* 亮色主题（默认）- 深蓝灰专业风 */
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8eaed;
+            --text-primary: #2c3e50;
+            --text-secondary: #34495e;
+            --text-muted: #7f8c8d;
+            --border-color: #d5d8dc;
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --toolbar-bg: #2c3e50;
+            --code-bg: #f4f6f7;
+            --shadow-color: rgba(0,0,0,0.12);
+            --error-bg: #fdf2f2;
+            --error-border: #fecaca;
+            --error-text: #dc2626;
+            --success-bg: #f0fdf4;
+            --success-border: #bbf7d0;
+            --success-text: #16a34a;
+            --warning-bg: #fffbeb;
+            --warning-border: #fde68a;
+            --warning-text: #d97706;
+            --info-bg: #eff6ff;
+            --info-border: #bfdbfe;
+            --info-text: #2563eb;
+            --table-header-bg: linear-gradient(180deg, #34495e 0%, #2c3e50 100%);
+            --table-header-text: #ecf0f1;
+            --table-hover: #f8f9fa;
+            --table-stripe: #f1f3f4;
+            --toc-hover: #e3f2fd;
+            --toc-active: #bbdefb;
+            --toc-hover-text: #1976d2;
+            --toc-active-text: #1565c0;
+        }
+
+        [data-theme="dark"] {
+            /* 深色主题 - 深蓝灰专业风 */
+            --bg-primary: #1e272e;
+            --bg-secondary: #2d3436;
+            --bg-tertiary: #252b2d;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-muted: #95a5a6;
+            --border-color: #34495e;
+            --accent-color: #74b9ff;
+            --accent-hover: #5aa3e8;
+            --toolbar-bg: #2c3e50;
+            --code-bg: #2d3436;
+            --shadow-color: rgba(0,0,0,0.4);
+            --error-bg: #3d1f1f;
+            --error-border: #5c2b2b;
+            --error-text: #ff6b6b;
+            --success-bg: #1e3a2f;
+            --success-border: #2d5a3d;
+            --success-text: #6dd55a;
+            --warning-bg: #3d3118;
+            --warning-border: #5c4a28;
+            --warning-text: #ffc107;
+            --info-bg: #1a2f4a;
+            --info-border: #2a4a6e;
+            --info-text: #74b9ff;
+            --table-header-bg: linear-gradient(180deg, #34495e 0%, #2c3e50 100%);
+            --table-header-text: #ecf0f1;
+            --table-hover: #2d3436;
+            --table-stripe: #252b2d;
+            --toc-hover: #1e3a5a;
+            --toc-active: #2a4a6e;
+            --toc-hover-text: #74b9ff;
+            --toc-active-text: #90caf9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .toolbar {
+            background: var(--toolbar-bg);
+            color: white;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            height: 56px;
+            flex-shrink: 0;
+        }
+
+        .toolbar h1 {
+            font-size: 1.25rem;
+            margin-right: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .btn-icon {
+            padding: 6px 10px;
+            min-width: 32px;
+            justify-content: center;
+        }
+
+        #font-size-display {
+            color: white;
+            font-size: 13px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #status {
+            font-size: 14px;
+            margin-left: auto;
+        }
+
+        /* 工具栏文件名居中显示 */
+        .toolbar-filename {
+            max-width: 500px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .toolbar-filename .filename-label {
+            color: rgba(255,255,255,0.7);
+            margin-right: 5px;
+        }
+
+        .content {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            border-right: 1px solid var(--border-color);
+            overflow: hidden;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            transition: background-color 0.3s, border-color 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent-color);
+            transition: color 0.3s;
+        }
+
+        .preview {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: var(--bg-primary);
+            transition: background-color 0.3s, font-size 0.3s;
+        }
+
+        .mermaid-container {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .text-content {
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .text-content h1, 
+        .text-content h2, 
+        .text-content h3, 
+        .text-content h4,
+        .text-content h5,
+        .text-content h6 {
+            color: var(--text-primary);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .text-content h2 { font-size: 1.6em; border-bottom-color: var(--border-color); }
+        .text-content h3 { font-size: 1.3em; color: var(--accent-color); }
+        .text-content p {
+            line-height: 1.8;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            text-align: justify;
+            transition: color 0.3s;
+        }
+
+        .text-content ul, .text-content ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .text-content li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .text-content code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        .text-content pre {
+            background: var(--code-bg);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .text-content pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            color: inherit;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .text-content strong {
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .text-content hr {
+            border: none;
+            border-top: 2px solid var(--border-color);
+            margin: 24px 0;
+            transition: border-color 0.3s;
+        }
+
+        .text-content blockquote {
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-left: 4px solid var(--accent-color);
+            background: var(--info-bg);
+            color: var(--info-text);
+            border-radius: 0 4px 4px 0;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        /* 表格样式 */
+        table {
+            border-collapse: collapse;
+            margin: 20px 0;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        table th, table td {
+            padding: 7px 18px;
+            text-align: left;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        table th {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 600;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        table tbody tr:hover {
+            background: var(--table-hover);
+            transition: background-color 0.3s;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: var(--table-stripe);
+            transition: background-color 0.3s;
+        }
+
+        /* 目录样式 */
+        #toc-container {
+            padding: 5px;
+        }
+
+        #toc-container .toc-item {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 10px;
+            margin: 2px 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        #toc-container .toc-item:hover {
+            background: var(--toc-hover);
+            color: var(--toc-hover-text);
+            border-color: var(--accent-color);
+        }
+
+        #toc-container .toc-item.active {
+            background: var(--toc-active);
+            color: var(--toc-active-text);
+            border-color: var(--accent-color);
+        }
+
+        .toc-empty {
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 10px;
+        }
+
+        /* 欢迎页面样式 */
+        .welcome {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .welcome h2 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .welcome p {
+            margin: 10px 0;
+            color: var(--text-muted);
+        }
+
+        .welcome #load-status {
+            margin-top: 40px;
+            padding: 15px 25px;
+            background: var(--info-bg);
+            border-radius: 8px;
+            display: inline-block;
+            color: var(--info-text);
+        }
+
+        /* 消息提示样式 */
+        .error { 
+            background: var(--error-bg); 
+            border: 1px solid var(--error-border); 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            color: var(--error-text); 
+        }
+
+        .success-message {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: var(--success-text);
+        }
+
+        .warning-message {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: var(--warning-text);
+        }
+
+        /* 文件标题样式 */
+        #preview h2[id^="file-title"] {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        /* 最近文件列表 */
+        .recent-file-item {
+            padding: 8px 10px;
+            margin: 4px 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-file-item:hover {
+            background: var(--toc-hover);
+            border-color: var(--accent-color);
+            color: var(--toc-hover-text);
+        }
+
+        /* Tab切换样式 - 固定在顶部 */
+        .sidebar-tabs {
+            display: flex;
+            margin: -15px -15px 15px -15px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            border-bottom: 2px solid transparent;
+        }
+
+        .sidebar-tab:hover {
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .sidebar-tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            background: rgba(52,152,219,0.08);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+        }
+
+        .sidebar-section {
+            display: none;
+        }
+
+        .sidebar-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar { width: 200px; min-width: 200px; }
+            .preview { font-size: 12px; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <h1>Mermaid Reader <span id="app-version" style="font-size: 0.7em; color: rgba(255,255,255,0.7);">v1.4</span></h1>
+        <button class="btn" onclick="openFile()">打开文件</button>
+        <button class="btn" onclick="clearContent()">清空</button>
+        <div style="flex: 1;"></div>
+        
+        <!-- 文件名居中显示 -->
+        <div class="toolbar-filename">
+            <span id="filename-display"></span>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        
+        <button class="btn btn-icon" onclick="adjustFontSize(-1)" title="缩小字体">A-</button>
+        <span id="font-size-display">100%</span>
+        <button class="btn btn-icon" onclick="adjustFontSize(1)" title="放大字体">A+</button>
+        
+        <button class="btn" id="theme-toggle" onclick="toggleTheme()">
+            <span id="theme-icon">🌙</span> 深色模式
+        </button>
+        
+        <button class="btn" onclick="exportWord()" title="导出Word">📄 Word</button>
+        <button class="btn" onclick="exportPDF()" title="导出PDF">📋 PDF</button>
+        <button class="btn" id="source-toggle" onclick="toggleSourceView()" title="切换源码/预览">📄 源码</button>
+    </div>
+    
+    <div class="content">
+        <div class="sidebar">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" onclick="switchSidebarTab('toc')" id="tab-toc">目录</button>
+                <button class="sidebar-tab" onclick="switchSidebarTab('files')" id="tab-files">最近文件</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="section-toc" class="sidebar-section active">
+                    <div id="toc-container">
+                        <p class="toc-empty">打开文件后显示目录</p>
+                    </div>
+                </div>
+                <div id="section-files" class="sidebar-section">
+                    <div id="recent-files-list">
+                        <p class="toc-empty">暂无最近文件</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview" id="preview">
+            <div class="welcome">
+                <h2>欢迎使用 Mermaid Reader</h2>
+                <p>点击"打开文件"按钮选择 Markdown 文件</p>
+                <p>支持 Mermaid 图表渲染（流程图、时序图、甘特图等）</p>
+                <p id="load-status">正在初始化...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局状态 ====================
+        let mermaidReady = false;
+        let markedReady = false;
+        let currentFileContent = '';
+        let currentFileName = '';
+        let headings = [];
+        let headingObserver = null;
+        let currentActiveHeading = null;
+        let currentFontSize = 100;
+        let isSourceView = false; // 是否为源码视图模式
+
+        // ==================== 初始化 ====================
+        window.addEventListener('load', function() {
+            initSettings();
+            checkLibraries();
+            updateRecentFilesList();
+        });
+
+        // 检查库加载状态
+        async function checkLibraries() {
+            const statusDiv = document.getElementById('status');
+            const loadStatus = document.getElementById('load-status');
+            
+            loadStatus.innerHTML = '正在检查库加载状态...';
+            
+            // 等待mermaid加载（最多10秒，增加等待时间）
+            let mermaidCheckCount = 0;
+            const maxWaitTime = 100; // 100次 × 100ms = 10秒
+            while (typeof mermaid === 'undefined' && mermaidCheckCount < maxWaitTime) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                mermaidCheckCount++;
+                if (mermaidCheckCount % 10 === 0) {
+                    loadStatus.innerHTML = `等待 Mermaid 库加载... (${mermaidCheckCount * 100 / 1000}s)`;
+                }
+            }
+            
+            if (typeof mermaid !== 'undefined') {
+                try {
+                    loadStatus.innerHTML = 'Mermaid 库已找到，正在初始化...';
+                    // 等待mermaid完全初始化（增加等待时间到2秒）
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: 'base',
+                        securityLevel: 'loose',
+                        themeVariables: {
+                            primaryColor: '#f0f4f8',
+                            primaryBorderColor: '#4a90a4',
+                            primaryTextColor: '#2d3748',
+                            lineColor: '#5a7a8a',
+                            secondaryColor: '#e8f4f8',
+                            tertiaryColor: '#f7fafc',
+                            fontSize: '14px'
+                        }
+                    });
+                    
+                    // 测试mermaid是否真正可用（最多重试3次）
+                    let testSuccess = false;
+                    let testRetries = 0;
+                    const maxRetries = 3;
+                    
+                    while (!testSuccess && testRetries < maxRetries) {
+                        try {
+                            if (window.addDebugInfo) window.addDebugInfo('启动测试', '开始Mermaid测试渲染');
+                            await mermaid.render('test-chart', 'graph TD;A-->B;');
+                            testSuccess = true;
+                            mermaidReady = true;
+                            loadStatus.innerHTML += '<br>✅ Mermaid 初始化成功';
+                        } catch (testError) {
+                            if (window.addDebugInfo) window.addDebugInfo('启动测试', 'Mermaid测试失败: ' + testError.message);
+                            testRetries++;
+                            if (testRetries < maxRetries) {
+                                loadStatus.innerHTML = `⚠️ Mermaid 测试中，重试 ${testRetries}/${maxRetries}...`;
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                            } else {
+                                // 最后一次失败，但仍然认为就绪
+                                mermaidReady = true;
+                                loadStatus.innerHTML += '<br>✅ Mermaid 就绪（测试渲染被跳过）';
+                            }
+                        }
+                    }
+                } catch (error) {
+                    loadStatus.innerHTML += '<br>❌ Mermaid 初始化失败: ' + error.message;
+                }
+            } else {
+                loadStatus.innerHTML += '<br>❌ Mermaid 库未加载（等待超时）';
+            }
+            
+            // 检查marked库
+            if (typeof marked !== 'undefined') {
+                markedReady = true;
+                loadStatus.innerHTML += '<br>✅ Marked 库已加载';
+                
+                // 配置 marked
+                const renderer = new marked.Renderer();
+                renderer.code = function(code, infostring, escaped) {
+                    const lang = (infostring || '').match(/^\S*/)?.[0] || '';
+                    code = code.replace(/\n$/, '');
+                    if (!lang) {
+                        return '<pre><code>' + code + '</code></pre>\n';
+                    }
+                    // 显示语言名称在代码块左上角
+                    return `<div style="position: relative; margin: 15px 0;">
+                        <div style="position: absolute; top: 0; left: 0; background: #2d3748; color: #ffffff; padding: 2px 10px; font-size: 12px; border-radius: 4px 0 4px 0; font-family: monospace; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${lang}</div>
+                        <pre style="margin: 0; padding-top: 28px;"><code class="language-${lang}">${code}</code></pre>
+                    </div>`;
+                };
+                marked.use({ renderer });
+            } else {
+                loadStatus.innerHTML += '<br>❌ Marked 库未加载';
+            }
+            
+            statusDiv.textContent = mermaidReady && markedReady ? '✅ 库已就绪' : '⚠️ 库加载有问题';
+            
+            if (mermaidReady && markedReady) {
+                setTimeout(() => {
+                    loadStatus.innerHTML = '✅ 所有库已就绪，请选择文件开始';
+                }, 1000);
+            }
+        }
+
+        // ==================== 文件操作 ====================
+        async function openFile() {
+            try {
+                if (window.go && window.go.main && window.go.main.App) {
+                    const filePath = await window.go.main.App.OpenFileDialog();
+                    if (filePath) {
+                        const content = await window.go.main.App.ReadFile(filePath);
+                        const fileName = await window.go.main.App.GetFileName(filePath);
+                        await handleFileLoad(content, fileName);
+                    }
+                } else {
+                    showError('Go后端API未就绪');
+                }
+            } catch (error) {
+                showError('打开文件失败: ' + error.message);
+            }
+        }
+
+        async function handleFileLoad(content, fileName) {
+            try {
+                currentFileContent = content;
+                currentFileName = fileName;
+                
+                // 提取目录
+                headings = extractHeadings(content, fileName);
+                renderTOC(headings);
+                
+                // 渲染内容
+                await renderContent(content, fileName);
+                
+                // 保存到最近文件
+                saveRecentFile(fileName, content);
+                
+                // 在工具栏显示文件名（已加载）
+                document.getElementById('filename-display').innerHTML = '<span class="filename-label">已加载：</span>' + fileName;
+            } catch (error) {
+                showError('处理文件失败: ' + error.message);
+            }
+        }
+
+        // ==================== 目录功能 ====================
+        function generateId(text) {
+            return 'heading-' + text.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '-').toLowerCase();
+        }
+
+        function extractHeadings(content, fileName) {
+            if (window.clearDebugInfo) window.clearDebugInfo();
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '========== 开始提取目录 ==========');
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '读取文件: ' + (fileName || '未命名文件'));
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '进入 extractHeadings 函数');
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '输入内容长度: ' + content.length);
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '输入前200字符: ' + content.substring(0, 200).replace(/</g, '&lt;'));
+            
+            // 先用marked.parse()得到HTML，marked已经正确处理了代码块和特殊情况
+            const html = marked.parse(content);
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', 'marked.parse()执行完成');
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '生成的HTML长度: ' + html.length);
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', 'HTML前500字符: ' + html.substring(0, 500).replace(/</g, '&lt;'));
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '包含&lt;h1&gt;: ' + html.includes('<h1'));
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '包含&lt;h2&gt;: ' + html.includes('<h2'));
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '包含&lt;h3&gt;: ' + html.includes('<h3'));
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '包含&lt;h4&gt;: ' + html.includes('<h4'));
+            
+            // 从HTML中提取h1-h6标签
+            const headingRegex = /<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi;
+            const result = [];
+            let match;
+            let matchCount = 0;
+            
+            while ((match = headingRegex.exec(html)) !== null) {
+                matchCount++;
+                const level = parseInt(match[1]);
+                // 移除HTML标签，获取纯文本
+                const text = match[2].replace(/<[^>]+>/g, '').trim();
+                if (window.addDebugInfo) window.addDebugInfo('目录提取', `匹配到标题 #${matchCount}: "${text}" (级别: ${level})`);
+                result.push({
+                    level: level,
+                    text: text,
+                    id: generateId(text)
+                });
+            }
+            
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '========== 共提取 ' + result.length + ' 个标题 ==========');
+            if (window.addDebugInfo) window.addDebugInfo('目录提取', '退出 extractHeadings 函数');
+            return result;
+        }
+
+        function renderTOC(headings) {
+            const container = document.getElementById('toc-container');
+
+            if (headings.length === 0) {
+                container.innerHTML = '<p class="toc-empty">文件中没有标题</p>';
+                return;
+            }
+
+            let html = '';
+            headings.forEach((heading) => {
+                let style = 'padding-left:10px;';
+                if (heading.level === 1) style = 'padding-left:5px;border-left:3px solid #0078d4;font-weight:bold;';
+                if (heading.level === 2) style = 'padding-left:20px;';
+                if (heading.level === 3) style = 'padding-left:35px;font-size:12px;';
+                if (heading.level === 4) style = 'padding-left:50px;font-size:12px;color:#666;';
+                if (heading.level === 5) style = 'padding-left:65px;font-size:12px;color:#888;font-style:italic;';
+                if (heading.level === 6) style = 'padding-left:80px;font-size:11px;color:#999;font-style:italic;';
+
+                html += '<div class="toc-item" style="' + style + '" onclick="scrollToHeading(\'' + heading.id + '\')" id="toc-' + heading.id + '">' + heading.text + '</div>';
+            });
+
+            container.innerHTML = html;
+            setTimeout(initScrollSpy, 500);
+        }
+
+        function initScrollSpy() {
+            const timestamp = new Date().toISOString();
+            if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + timestamp + '] initScrollSpy被调用');
+            
+            if (headingObserver) {
+                headingObserver.disconnect();
+                if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + timestamp + '] 断开旧Observer');
+            }
+
+            const preview = document.getElementById('preview');
+            const headingElements = preview.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+
+            if (headingElements.length === 0) {
+                if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + timestamp + '] 未找到标题元素，退出');
+                return;
+            }
+            
+            if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + timestamp + '] 找到' + headingElements.length + '个标题元素');
+
+            headingObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const obsTimestamp = new Date().toISOString();
+                        if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + obsTimestamp + '] 标题进入视口: ' + entry.target.id);
+                        setActiveTOCItem(entry.target.id);
+                    }
+                });
+            }, {
+                rootMargin: '-80px 0px -60% 0px',
+                threshold: 0
+            });
+
+            headingElements.forEach(heading => {
+                headingObserver.observe(heading);
+            });
+            
+            if (window.addDebugInfo) window.addDebugInfo('滚动监听', '[' + timestamp + '] Observer已启动，监听' + headingElements.length + '个元素');
+        }
+
+        function setActiveTOCItem(headingId) {
+            if (currentActiveHeading === headingId) return;
+            currentActiveHeading = headingId;
+
+            document.querySelectorAll('#toc-container .toc-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const tocItem = document.getElementById('toc-' + headingId);
+            if (tocItem) {
+                tocItem.classList.add('active');
+                tocItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function scrollToHeading(id) {
+            const timestamp = new Date().toISOString();
+            if (window.addDebugInfo) window.addDebugInfo('点击目录', '[' + timestamp + '] scrollToHeading被调用, id=' + id);
+            
+            const element = document.getElementById(id);
+            if (window.addDebugInfo) {
+                window.addDebugInfo('点击目录', '[' + timestamp + '] 查找元素结果: ' + (element ? '找到' : '未找到'));
+                if (element) {
+                    window.addDebugInfo('点击目录', '[' + timestamp + '] 元素标签: ' + element.tagName);
+                    window.addDebugInfo('点击目录', '[' + timestamp + '] 元素innerText: ' + element.innerText.substring(0, 50));
+                    window.addDebugInfo('点击目录', '[' + timestamp + '] 元素位置: top=' + element.getBoundingClientRect().top + ', left=' + element.getBoundingClientRect().left);
+                    window.addDebugInfo('点击目录', '[' + timestamp + '] 视口滚动位置: scrollY=' + window.scrollY + ', scrollTop=' + document.documentElement.scrollTop);
+                    const preview = document.getElementById('preview');
+                    window.addDebugInfo('点击目录', '[' + timestamp + '] preview滚动位置: scrollTop=' + (preview ? preview.scrollTop : 'null'));
+                }
+            }
+            
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (window.addDebugInfo) window.addDebugInfo('点击目录', '[' + timestamp + '] 已执行scrollIntoView, 目标元素: ' + id);
+                
+                document.querySelectorAll('.toc-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const tocItem = document.getElementById('toc-' + id);
+                if (window.addDebugInfo) window.addDebugInfo('点击目录', '[' + timestamp + '] TOC项查找: ' + (tocItem ? '找到toc-' + id : '未找到toc-' + id));
+                if (tocItem) {
+                    tocItem.classList.add('active');
+                    if (window.addDebugInfo) window.addDebugInfo('点击目录', '[' + timestamp + '] 已添加active类到TOC项');
+                }
+            }
+        }
+
+        // ==================== 内容渲染 ====================
+        function fixMermaidCode(code) {
+            let fixedCode = code;
+            
+            // 1. 处理©符号 - 只在方括号内部处理
+            if (fixedCode.includes('©') || fixedCode.includes('(C)') || fixedCode.includes('(c)')) {
+                fixedCode = fixedCode.replace(/\[([^\]]*?)\s*\(\s*[cC©]\s*\)\s*([^\]]*?)\]/g, (match, before, after) => {
+                    const cleaned = before + ' ' + after;
+                    return '[' + cleaned.trim() + ']';
+                });
+            }
+            
+            // 2. 处理特殊破折号
+            if (/[—–]/.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/[—–]/g, '---');
+            }
+            
+            // 3. 修复 [[...]] 双层方括号语法 - Mermaid 10.x 不支持
+            if (/\[\[/.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/\[\[([^\]]+?)\]\](?!\])/g, '["$1"]');
+            }
+            
+            // 4. 移除br标签
+            if (/<br\s*\/?>/i.test(fixedCode)) {
+                fixedCode = fixedCode.replace(/<br\s*\/?>/gi, ' ');
+            }
+            
+            // 5. 处理方括号文本中未转义的引号 - 从app.html完全复制
+            fixedCode = fixedCode.replace(/(\w+)\[("|"|"|"|'|'|"|"|"|")(.*?)\2\]/g, (match, id, quote, text) => {
+                if (text.includes(quote)) {
+                    return `${id}[${text.replace(new RegExp(quote, 'g'), '')}]`;
+                }
+                return match;
+            });
+            
+            return fixedCode;
+        }
+
+        function parseMarkdownWithIds(text) {
+            if (!markedReady) {
+                return text;
+            }
+
+            let html = marked.parse(text);
+
+            html = html.replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (match, level, title) => {
+                const id = generateId(title.replace(/<[^>]+>/g, '').trim());
+                return `<h${level} id="${id}">${title}</h${level}>`;
+            });
+
+            return html;
+        }
+
+        // ==================== 三层防御体系 - 辅助函数 ====================
+        
+        /**
+         * HTML转义辅助函数
+         * 将特殊字符转换为HTML实体，防止XSS攻击
+         * @param {string} text - 原始文本
+         * @returns {string} - 转义后的文本
+         */
+        function escapeHtml(text) {
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【进入】escapeHtml()');
+            if (!text) {
+                if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】escapeHtml() - 空文本');
+                return '';
+            }
+            const result = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】escapeHtml()');
+            return result;
+        }
+        
+        /**
+         * 左下角错误弹窗函数（第二层防御）
+         * 显示优雅的错误提示，不破坏页面布局
+         * @param {string} message - 错误标题
+         * @param {string} details - 错误详情
+         */
+        function showErrorNotification(message, details) {
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【进入】showErrorNotification() - message: ' + message.substring(0, 30));
+            // 检查是否已存在通知容器
+            let notificationContainer = document.getElementById('error-notification-container');
+            if (!notificationContainer) {
+                // 创建容器（固定在左下角）
+                notificationContainer = document.createElement('div');
+                notificationContainer.id = 'error-notification-container';
+                notificationContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    z-index: 9999;
+                    max-width: 400px;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                `;
+                document.body.appendChild(notificationContainer);
+            }
+            
+            // 创建单个通知
+            const notification = document.createElement('div');
+            const notificationId = 'error-notify-' + Date.now();
+            notification.id = notificationId;
+            notification.className = 'error-notification';
+            notification.style.cssText = `
+                background: #fee2e2;
+                border: 1px solid #fecaca;
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-top: 10px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            // 构建通知内容
+            const hasDetails = details && details.trim().length > 0;
+            notification.innerHTML = 
+                '<div style="display: flex; align-items: start; gap: 10px;">' +
+                    '<span style="color: #dc2626; font-size: 18px;">⚠️</span>' +
+                    '<div style="flex: 1;">' +
+                        '<div style="color: #991b1b; font-weight: 600; font-size: 14px; margin-bottom: 4px;">' +
+                            escapeHtml(message) +
+                        '</div>' +
+                        (hasDetails ? 
+                            '<details style="margin-top: 8px;">' +
+                                '<summary style="color: #dc2626; font-size: 11px; cursor: pointer; user-select: none;">' +
+                                    '查看详情' +
+                                '</summary>' +
+                                '<pre style="margin-top: 8px; padding: 8px; background: #fef2f2; border-radius: 4px; ' +
+                                'font-size: 10px; overflow-x: auto; color: #7f1d1d;">' + 
+                                    escapeHtml(details) + 
+                                '</pre>' +
+                            '</details>' : '') +
+                    '</div>' +
+                    '<button onclick="document.getElementById(\'' + notificationId + '\').remove();" ' +
+                        'style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 16px; ' +
+                        'padding: 0; line-height: 1;">' +
+                        '×' +
+                    '</button>' +
+                '</div>';
+            
+            // 添加动画样式（如果还没有）
+            if (!document.getElementById('error-notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'error-notification-styles';
+                style.textContent = 
+                    '@keyframes slideIn {' +
+                        'from { transform: translateX(-100%); opacity: 0; }' +
+                        'to { transform: translateX(0); opacity: 1; }' +
+                    '}' +
+                    '@keyframes slideOut {' +
+                        'from { transform: translateX(0); opacity: 1; }' +
+                        'to { transform: translateX(-100%); opacity: 0; }' +
+                    '}';
+                document.head.appendChild(style);
+            }
+            
+            notificationContainer.appendChild(notification);
+            
+            // 自动移除（10秒后）
+            setTimeout(function() {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideOut 0.3s ease-in forwards';
+                    setTimeout(function() {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 10000);
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】showErrorNotification()');
+        }
+        
+        /**
+         * 清理Mermaid错误元素函数（第二层防御）
+         * Mermaid渲染失败时会在body中插入错误SVG，必须清理
+         * @param {string} chartId - 图表ID
+         */
+        function cleanupMermaidErrorElements(chartId) {
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【进入】cleanupMermaidErrorElements() - chartId: ' + chartId);
+            // Mermaid可能创建的容器ID（多种可能性）
+            const possibleIds = [
+                chartId,           // #chart-xxx
+                'd' + chartId,     // #dchart-xxx（Mermaid有时会加d前缀）
+                'i' + chartId,     // #ichart-xxx（Mermaid有时会加i前缀）
+                'd' + chartId.replace('chart-', ''),  // #d-xxx
+                'i' + chartId.replace('chart-', '')   // #i-xxx
+            ];
+            
+            let cleanedCount = 0;
+            let checkedCount = 0;
+            
+            possibleIds.forEach(function(id) {
+                try {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        // 检查是否是错误容器（包含错误文本）
+                        const isErrorContainer = el.textContent && (
+                            el.textContent.includes('Syntax error in text') ||
+                            el.textContent.includes('Parse error') ||
+                            el.querySelector && el.querySelector('.error-text')
+                        );
+                        
+                        if (isErrorContainer) {
+                            console.log('【清理】Mermaid错误容器:', id);
+                            if (window.addDebugInfo) {
+                                window.addDebugInfo('错误清理', '清理Mermaid错误容器: ' + id);
+                            }
+                            el.remove();
+                            cleanedCount++;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('清理元素时出错:', id, e);
+                }
+            });
+            
+            // 同时清理所有包含错误文本的SVG
+            try {
+                const errorSvgs = document.querySelectorAll('svg');
+                errorSvgs.forEach(function(svg) {
+                    if (svg.textContent && svg.textContent.includes('Syntax error in text')) {
+                        console.log('【清理】Mermaid错误SVG');
+                        if (window.addDebugInfo) {
+                            window.addDebugInfo('错误清理', '清理Mermaid错误SVG');
+                        }
+                        svg.remove();
+                        cleanedCount++;
+                    }
+                });
+            } catch (e) {
+                console.warn('清理SVG时出错:', e);
+            }
+            
+            if (cleanedCount > 0) {
+                console.log('共清理', cleanedCount, '个错误元素');
+                if (window.addDebugInfo) window.addDebugInfo('错误清理', '共清理 ' + cleanedCount + ' 个错误元素');
+            }
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】cleanupMermaidErrorElements() - 清理数: ' + cleanedCount);
+        }
+        
+        /**
+         * 验证Mermaid代码语法函数（第一层防御）
+         * 在调用render前预检语法，避免生成错误SVG
+         * @param {string} code - Mermaid代码
+         * @returns {Object} - {valid: boolean, error: string|null}
+         */
+        async function validateMermaidCode(code) {
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【进入】validateMermaidCode()');
+            try {
+                // 使用mermaid.parse验证语法（不渲染）
+                await mermaid.parse(code);
+                if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】validateMermaidCode() - 验证通过');
+                return { valid: true, error: null };
+            } catch (error) {
+                if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】validateMermaidCode() - 验证失败: ' + error.message);
+                return { 
+                    valid: false, 
+                    error: error.message || '语法错误' 
+                };
+            }
+        }
+        
+        /**
+         * 检查并清理Mermaid错误元素函数（第三层防御 - 全局监控辅助）
+         * @param {Element} element - 要检查的元素
+         */
+        function checkAndCleanupMermaidError(element) {
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【进入】checkAndCleanupMermaidError()');
+            if (!element || element.nodeType !== 1) {
+                if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】checkAndCleanupMermaidError() - 无效元素');
+                return false;
+            }
+            
+            try {
+                // 检查特征1：SVG包含错误文本
+                const isErrorSvg = element.tagName === 'SVG' && (
+                    element.textContent && element.textContent.includes('Syntax error in text')
+                );
+                
+                // 检查特征2：包含error-text类
+                const hasErrorText = element.querySelector && element.querySelector('.error-text');
+                
+                // 检查特征3：Mermaid错误容器ID
+                const isErrorContainer = element.id && (
+                    element.id.startsWith('dchart') || 
+                    element.id.startsWith('ichart') ||
+                    element.id.startsWith('chart-')
+                ) && element.textContent && element.textContent.includes('Syntax error');
+                
+                if (isErrorSvg || hasErrorText || isErrorContainer) {
+                    console.warn('【全局监控】检测到Mermaid错误元素，自动清理:', 
+                        element.id || element.className || 'unknown');
+                    
+                    if (window.addDebugInfo) {
+                        window.addDebugInfo('全局监控', '自动清理Mermaid错误元素');
+                    }
+                    
+                    element.remove();
+                    
+                    // 显示通知（如果还没有显示）
+                    showErrorNotification('检测到图表渲染错误，已自动清理', '');
+                    
+                    if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】checkAndCleanupMermaidError() - 已清理');
+                    return true;
+                }
+            } catch (e) {
+                console.warn('检查元素时出错:', e);
+                if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】checkAndCleanupMermaidError() - 异常');
+            }
+            
+            if (window.addDebugInfo) window.addDebugInfo('辅助函数', '【退出】checkAndCleanupMermaidError() - 无需清理');
+            return false;
+        }
+        
+        // ==================== 三层防御体系 - 辅助函数结束 ====================
+
+        async function renderContent(content, fileName) {
+            const timestamp = new Date().toISOString();
+            if (window.addDebugInfo) window.addDebugInfo('渲染流程', '[' + timestamp + '] renderContent被调用, fileName=' + fileName);
+            
+            const preview = document.getElementById('preview');
+            // 显示居中的标题行：已加载：文件名（超长截断）
+            preview.innerHTML = '<h2 id="file-title-' + fileName + '">' + fileName + '</h2>';
+            
+            // 首先，将内容转换为HTML（这会正确处理代码块，避免代码块内的mermaid被匹配）
+            const textHtml = parseMarkdownWithIds(content);
+            preview.innerHTML += '<div class="text-content" id="temp-content">' + textHtml + '</div>';
+            
+            // 然后，在生成的HTML中查找mermaid代码块（此时代码块内的mermaid示例不会被匹配）
+            const mermaidCodeBlocks = preview.querySelectorAll('pre code.language-mermaid');
+            
+            if (mermaidCodeBlocks.length === 0) {
+                // 没有mermaid图表，直接完成
+                initScrollSpy();
+                return;
+            }
+            
+            let chartCount = 0;
+            let successCount = 0;
+            let failedCharts = [];
+            
+            // 遍历所有mermaid代码块并渲染
+            for (let i = 0; i < mermaidCodeBlocks.length; i++) {
+                const codeBlock = mermaidCodeBlocks[i];
+                const originalCode = codeBlock.textContent;
+                
+                // 检测是否为教学示例（不应渲染为图表）
+                const isTeachingExample = (code) => {
+                    // 检查是否包含教学注释
+                    if (code.includes('// 不推荐') || code.includes('// 错误') || code.includes('// 不推荐:')) {
+                        return true;
+                    }
+                    // 检查是否包含多个图表定义
+                    const diagramCount = (code.match(/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt)/gm) || []).length;
+                    if (diagramCount > 1) {
+                        return true;
+                    }
+                    return false;
+                };
+
+                // 如果是教学示例，跳过渲染
+                if (isTeachingExample(originalCode)) {
+                    console.log('检测到教学示例，保持代码块原样:', originalCode.substring(0, 50));
+                    if (window.addDebugInfo) window.addDebugInfo('Mermaid渲染', '跳过教学示例 #' + i);
+                    continue; // 跳过这个代码块，不渲染为图表
+                }
+                
+                const fixedCode = fixMermaidCode(originalCode);
+                
+                const chartId = 'chart-' + Date.now() + '-' + i;
+                chartCount++;
+                
+                if (window.addDebugInfo) window.addDebugInfo('Mermaid渲染', '开始渲染图表 #' + i + ', ID=' + chartId);
+                
+                // 【第一层防御】语法预检：在调用render前验证语法
+                // 说明：使用mermaid.parse预检语法，如果失败直接跳过，不调用render
+                // 优点：不会生成错误SVG，避免清理操作
+                const validation = await validateMermaidCode(fixedCode);
+                if (!validation.valid) {
+                    console.log('【第一层防御】语法预检失败，跳过渲染:', validation.error);
+                    
+                    // 记录错误
+                    failedCharts.push({
+                        chartIndex: i + 1,
+                        errorMessage: validation.error,
+                        codePreview: originalCode.substring(0, 100),
+                        type: 'syntax_error_pre_check'
+                    });
+                    
+                    // 显示友好提示
+                    showErrorNotification(
+                        '图表 #' + (i + 1) + ' 语法错误',
+                        '错误信息: ' + validation.error + '\n\n' +
+                        '请检查Mermaid语法，或使用双引号包裹特殊文本。'
+                    );
+                    
+                    // 记录到调试面板
+                    if (window.addDebugInfo) {
+                        window.addDebugInfo('Mermaid渲染', '图表 #' + i + ' 语法预检失败，跳过渲染: ' + validation.error);
+                    }
+                    
+                    continue; // 跳过这个代码块，不调用mermaid.render()
+                }
+                
+                // 语法正确，继续调用render
+                try {
+                    const result = await mermaid.render(chartId, fixedCode);
+                    if (window.addDebugInfo) window.addDebugInfo('Mermaid渲染', '图表 #' + i + ' 渲染成功');
+                    
+                    if (result && result.svg) {
+                        // 创建图表容器替换代码块
+                        const chartContainer = document.createElement('div');
+                        chartContainer.className = 'mermaid-container';
+                        chartContainer.innerHTML = result.svg;
+                        
+                        // 替换pre元素（保留在文本流中的位置）
+                        const preElement = codeBlock.closest('pre');
+                        if (preElement && preElement.parentNode) {
+                            preElement.parentNode.replaceChild(chartContainer, preElement);
+                        }
+                        successCount++;
+                    }
+                } catch (renderError) {
+                    // 【第二层防御】Step 1: 立即清理Mermaid在body中插入的错误SVG
+                    // 说明：Mermaid在抛出异常前，可能已在body中插入错误SVG（2412x512像素）
+                    // 必须立即清理，防止错误信息显示在页面底部破坏布局
+                    cleanupMermaidErrorElements(chartId);
+                    
+                    // Step 2: 记录错误信息
+                    const errorInfo = {
+                        chartIndex: i + 1,
+                        errorMessage: renderError.message || '未知错误',
+                        codePreview: originalCode.substring(0, 100),
+                        timestamp: new Date().toISOString()
+                    };
+                    failedCharts.push(errorInfo);
+                    
+                    // Step 3: 显示左下角错误提示（不破坏页面布局）
+                    // 说明：使用弹窗通知用户，比静默处理更友好
+                    showErrorNotification(
+                        '图表 #' + (i + 1) + ' 渲染失败',
+                        '错误信息: ' + renderError.message + '\n\n' +
+                        '代码片段:\n' + originalCode.substring(0, 200)
+                    );
+                    
+                    // Step 4: 记录到控制台和调试面板
+                    console.log('图表渲染失败（已清理错误元素）:', errorInfo);
+                    if (window.addDebugInfo) {
+                        window.addDebugInfo('Mermaid渲染', '图表 #' + i + ' 渲染失败（已清理）: ' + renderError.message);
+                    }
+                    
+                    // Step 5: 保留原始代码块（静默处理的核心）
+                    // 说明：不替换代码块，让用户看到原始Mermaid代码
+                    // 这样可以保留代码供用户复制和修复
+                }
+            }
+            
+            // 移除临时ID
+            const tempContent = document.getElementById('temp-content');
+            if (tempContent) {
+                tempContent.removeAttribute('id');
+            }
+            
+            // 显示渲染统计信息
+            if (chartCount > 0) {
+                preview.innerHTML += '<div class="text-content" style="margin-top: 20px;">';
+                preview.innerHTML += '<h3 style="margin-bottom: 10px;">📊 渲染统计</h3>';
+                preview.innerHTML += '<p>总图表数: ' + chartCount + ' | 成功: ' + successCount + ' | 失败: ' + (chartCount - successCount) + '</p>';
+                
+                if (failedCharts.length > 0) {
+                    preview.innerHTML += '<details style="margin-top: 10px; font-size: 12px;">';
+                    preview.innerHTML += '<summary style="cursor: pointer; color: #c53030; font-weight: bold;">🔍 点击查看失败详情（用于调试分析）</summary>';
+                    preview.innerHTML += '<pre style="background: #f7fafc; padding: 10px; overflow: auto; max-height: 300px; font-size: 11px; line-height: 1.4;">' + 
+                        JSON.stringify(failedCharts, null, 2) + '</pre>';
+                    preview.innerHTML += '</details>';
+                }
+                
+                if (successCount === chartCount) {
+                    preview.innerHTML += '<p class="success-message" style="margin-top: 10px;">✅ 所有图表渲染成功！</p>';
+                } else if (successCount > 0) {
+                    preview.innerHTML += '<p class="warning-message" style="margin-top: 10px;">⚠️ 部分图表渲染失败，已跳过错误图表</p>';
+                } else {
+                    preview.innerHTML += '<p class="error" style="margin-top: 10px;">❌ 所有图表渲染失败</p>';
+                }
+                preview.innerHTML += '</div>';
+            }
+            
+            // 初始化滚动监听（必须在图表渲染完成后）
+            initScrollSpy();
+        }
+
+        // ==================== 主题与字体 ====================
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            
+            if (isDark) {
+                body.setAttribute('data-theme', 'light');
+                document.getElementById('theme-icon').textContent = '🌙';
+                localStorage.setItem('mermaidReaderTheme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                document.getElementById('theme-icon').textContent = '☀️';
+                localStorage.setItem('mermaidReaderTheme', 'dark');
+            }
+        }
+
+        function adjustFontSize(delta) {
+            const newSize = currentFontSize + delta * 10;
+            if (newSize >= 80 && newSize <= 150) {
+                currentFontSize = newSize;
+                applyFontSize();
+            }
+        }
+
+        function applyFontSize() {
+            // 应用到预览区域及其所有子元素
+            const preview = document.getElementById('preview');
+            if (preview) {
+                preview.style.fontSize = currentFontSize + '%';
+                // 确保所有文本内容区域也应用字体大小
+                const textContents = preview.querySelectorAll('.text-content');
+                textContents.forEach(el => {
+                    el.style.fontSize = 'inherit';
+                });
+            }
+            const display = document.getElementById('font-size-display');
+            if (display) {
+                display.textContent = currentFontSize + '%';
+            }
+            localStorage.setItem('mermaidReaderFontSize', currentFontSize);
+        }
+
+        function initSettings() {
+            const savedFontSize = localStorage.getItem('mermaidReaderFontSize');
+            if (savedFontSize) {
+                currentFontSize = parseInt(savedFontSize);
+            }
+            applyFontSize();
+
+            const savedTheme = localStorage.getItem('mermaidReaderTheme');
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                document.getElementById('theme-icon').textContent = '☀️';
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+            }
+            
+            // 恢复侧边栏Tab选中状态
+            restoreSidebarTab();
+            
+            // 获取并显示应用版本号
+            loadAppVersion();
+        }
+
+        // 加载并显示应用版本号
+        async function loadAppVersion() {
+            try {
+                if (window.go && window.go.main && window.go.main.App) {
+                    const version = await window.go.main.App.GetVersion();
+                    // 更新title
+                    document.title = 'Mermaid Reader v' + version;
+                    // 更新工具栏版本显示
+                    const versionSpan = document.getElementById('app-version');
+                    if (versionSpan) {
+                        versionSpan.textContent = 'v' + version;
+                    }
+                    // 更新欢迎页面标题
+                    updateWelcomeVersion(version);
+                }
+            } catch (error) {
+                console.log('获取版本号失败:', error);
+            }
+        }
+
+        // 更新欢迎页面中的版本号
+        function updateWelcomeVersion(version) {
+            const welcomeTitles = document.querySelectorAll('.welcome h2');
+            welcomeTitles.forEach(h2 => {
+                if (h2.textContent.includes('Mermaid Reader')) {
+                    h2.innerHTML = '欢迎使用 Mermaid Reader <span style="font-size: 0.7em; color: #666;">v' + version + '</span>';
+                }
+            });
+        }
+
+        // ==================== 最近文件 ====================
+        function saveRecentFile(name, content) {
+            let recentFiles = JSON.parse(localStorage.getItem('mermaidRecentFiles') || '[]');
+            recentFiles = recentFiles.filter(f => f.name !== name);
+            recentFiles.unshift({ name, content, time: Date.now() });
+            if (recentFiles.length > 10) {
+                recentFiles = recentFiles.slice(0, 10);
+            }
+            localStorage.setItem('mermaidRecentFiles', JSON.stringify(recentFiles));
+            updateRecentFilesList();
+        }
+
+        function updateRecentFilesList() {
+            const list = document.getElementById('recent-files-list');
+            const recentFiles = JSON.parse(localStorage.getItem('mermaidRecentFiles') || '[]');
+            
+            if (recentFiles.length === 0) {
+                list.innerHTML = '<p class="toc-empty">暂无最近文件</p>';
+                return;
+            }
+            
+            let html = '';
+            recentFiles.forEach(file => {
+                html += '<div class="recent-file-item" onclick="loadRecentFile(\'' + file.name + '\')">' + file.name + '</div>';
+            });
+            list.innerHTML = html;
+        }
+
+        // ==================== 侧边栏Tab切换 ====================
+        function switchSidebarTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.sidebar-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.sidebar-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 添加active类到当前选中的tab和section
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('section-' + tabName).classList.add('active');
+            
+            // 保存当前选中的tab到localStorage（可选，记住用户偏好）
+            localStorage.setItem('mermaidReaderActiveTab', tabName);
+        }
+
+        // 恢复上次选中的tab（页面加载时）
+        function restoreSidebarTab() {
+            const savedTab = localStorage.getItem('mermaidReaderActiveTab');
+            if (savedTab && (savedTab === 'toc' || savedTab === 'files')) {
+                switchSidebarTab(savedTab);
+            }
+        }
+
+        async function loadRecentFile(fileName) {
+            const recentFiles = JSON.parse(localStorage.getItem('mermaidRecentFiles') || '[]');
+            const file = recentFiles.find(f => f.name === fileName);
+            if (file && file.content) {
+                await handleFileLoad(file.content, file.name);
+            }
+        }
+
+        // ==================== 其他功能 ====================
+        function clearContent() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = `
+                <div class="welcome">
+                    <h2>欢迎使用 Mermaid Reader</h2>
+                    <p>点击"打开文件"按钮选择Markdown文件</p>
+                    <p>支持Mermaid图表渲染（流程图、时序图、甘特图等）</p>
+                    <p>✅ 库已就绪，请选择文件开始渲染</p>
+                </div>
+            `;
+            document.getElementById('toc-container').innerHTML = '<p class="toc-empty">打开文件后显示目录</p>';
+            headings = [];
+            currentFileContent = '';
+            currentFileName = '';
+            document.getElementById('status').textContent = '';
+            document.getElementById('filename-display').innerHTML = ''; // 清空文件名显示
+        }
+
+        // ==================== 通知功能 ====================
+        function showNotification(type, message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 9999;
+                max-width: 300px;
+                word-wrap: break-word;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
+            `;
+            
+            // 根据类型设置颜色
+            switch(type) {
+                case 'success':
+                    notification.style.background = '#10b981';
+                    notification.style.color = 'white';
+                    break;
+                case 'error':
+                    notification.style.background = '#ef4444';
+                    notification.style.color = 'white';
+                    break;
+                case 'warning':
+                    notification.style.background = '#f59e0b';
+                    notification.style.color = 'white';
+                    break;
+                default:
+                    notification.style.background = '#3b82f6';
+                    notification.style.color = 'white';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // ==================== 导出功能 ====================
+        function exportWord() {
+            if (!currentFileContent) {
+                showNotification('warning', '请先打开一个文件');
+                return;
+            }
+            
+            // 使用 Promise 处理异步
+            (async () => {
+                try {
+                    console.log('开始导出Word...');
+                    console.log('currentFileContent长度:', currentFileContent.length);
+                    
+                    // 获取建议的文件名
+                    const suggestedName = currentFileName ? currentFileName.replace(/\.md$/i, '.docx') : 'document.docx';
+                    console.log('建议文件名:', suggestedName);
+                    
+                    // 检查 window.go.main.App.ExportMarkdownToDocx 是否可用
+                    if (!window.go || !window.go.main || !window.go.main.App || !window.go.main.App.ExportMarkdownToDocx) {
+                        console.error('ExportMarkdownToDocx 未绑定到 Wails');
+                        showNotification('error', '导出功能未初始化，请重启应用');
+                        return;
+                    }
+                    
+                    // 调用后端导出 DOCX（使用正确的 Wails 调用方式）
+                    console.log('调用 window.go.main.App.ExportMarkdownToDocx...');
+                    const savedPath = await window.go.main.App.ExportMarkdownToDocx(currentFileContent, suggestedName);
+                    
+                    console.log('返回结果:', savedPath);
+                    if (savedPath) {
+                        showNotification('success', `Word 文档已保存到: ${savedPath}`);
+                        console.log('Word导出成功:', savedPath);
+                    } else {
+                        showNotification('warning', '导出被取消或未完成');
+                    }
+                } catch (error) {
+                    console.error('Word导出失败:', error);
+                    console.error('错误详情:', error.stack);
+                    showNotification('error', 'Word导出失败: ' + (error.message || error));
+                }
+            })();
+        }
+
+        function exportPDF() {
+            if (!currentFileContent) {
+                showNotification('warning', '请先打开一个文件');
+                return;
+            }
+            
+            // 获取预览区域的已渲染内容（包含Mermaid SVG）
+            const previewContent = document.getElementById('preview');
+            if (!previewContent || !previewContent.innerHTML.trim()) {
+                showNotification('warning', '请先等待内容渲染完成');
+                return;
+            }
+            
+            try {
+                // 使用浏览器打印功能导出PDF
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>${currentFileName}</title>
+                        <style>
+                            body { 
+                                font-family: 'Segoe UI', Arial, sans-serif; 
+                                padding: 20px; 
+                                line-height: 1.6; 
+                                font-size: 14px;
+                            }
+                            h1 { 
+                                color: #333; 
+                                border-bottom: 2px solid #0078d4; 
+                                padding-bottom: 10px; 
+                                font-size: 24px;
+                            }
+                            h2 { font-size: 20px; color: #444; }
+                            h3 { font-size: 18px; color: #555; }
+                            h4 { font-size: 16px; color: #666; }
+                            h5, h6 { font-size: 14px; color: #777; }
+                            /* 代码块样式 - 统一字体大小 */
+                            pre, code {
+                                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                                font-size: 13px;
+                                line-height: 1.5;
+                            }
+                            pre {
+                                background: #f4f4f4; 
+                                padding: 15px; 
+                                border-radius: 5px; 
+                                white-space: pre-wrap;
+                                overflow-x: auto;
+                            }
+                            code {
+                                background: #f0f0f0;
+                                padding: 2px 6px;
+                                border-radius: 3px;
+                            }
+                            /* 表格样式 */
+                            table {
+                                border-collapse: collapse;
+                                width: 100%;
+                                margin: 15px 0;
+                            }
+                            th, td {
+                                border: 1px solid #ddd;
+                                padding: 8px;
+                                text-align: left;
+                            }
+                            th {
+                                background-color: #f5f5f5;
+                                font-weight: bold;
+                            }
+                            /* 列表样式 */
+                            ul, ol {
+                                margin: 10px 0;
+                                padding-left: 30px;
+                            }
+                            li {
+                                margin: 5px 0;
+                            }
+                            /* 引用块样式 */
+                            blockquote {
+                                border-left: 4px solid #0078d4;
+                                margin: 10px 0;
+                                padding: 10px 20px;
+                                background: #f9f9f9;
+                            }
+                            /* Mermaid图表容器 */
+                            .mermaid {
+                                text-align: center;
+                                margin: 20px 0;
+                            }
+                            .mermaid svg {
+                                max-width: 100%;
+                                height: auto;
+                            }
+                            /* 打印优化 */
+                            @media print {
+                                body { padding: 10px; }
+                                pre { white-space: pre-wrap; word-wrap: break-word; }
+                                .mermaid svg { max-width: 100%; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>${currentFileName}</h1>
+                        <div>${previewContent.innerHTML}</div>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                
+                // 延迟打印，确保内容加载完成
+                setTimeout(() => {
+                    printWindow.print();
+                }, 800);
+                
+                console.log('PDF导出窗口已打开，请选择"另存为PDF"');
+            } catch (error) {
+                console.error('PDF导出失败:', error);
+                showNotification('error', 'PDF导出失败: ' + error.message);
+            }
+        }
+
+        // ==================== 源码/预览切换功能 ====================
+        function toggleSourceView() {
+            if (!currentFileContent) {
+                showNotification('warning', '请先打开一个文件');
+                return;
+            }
+            
+            isSourceView = !isSourceView;
+            updateSourceViewButton();
+            
+            if (isSourceView) {
+                // 显示源码
+                showSourceView();
+            } else {
+                // 恢复预览
+                renderContent(currentFileContent, currentFileName);
+            }
+        }
+
+        function showSourceView() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = `
+                <h2 id="file-title-${currentFileName}">${currentFileName}</h2>
+                <div class="text-content" style="background: #f8f9fa; border: 1px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <span style="font-weight: bold; color: #666;">📄 源码视图</span>
+                        <span style="font-size: 12px; color: #999;">${currentFileContent.length} 字符</span>
+                    </div>
+                    <pre style="background: #f4f4f4; padding: 15px; border-radius: 4px; overflow-x: auto; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${currentFileContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                </div>
+            `;
+        }
+
+        function updateSourceViewButton() {
+            const btn = document.getElementById('source-toggle');
+            if (isSourceView) {
+                btn.innerHTML = '👁️ 预览';
+                btn.title = '切换回预览视图';
+            } else {
+                btn.innerHTML = '📄 源码';
+                btn.title = '查看原始源码';
+            }
+        }
+
+        function showError(message) {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '<div class="error"><h3>错误</h3><p>' + message + '</p></div>';
+        }
+        
+        // ==================== 全局错误捕获（调试用途）====================
+        // 创建错误日志数组，保存最近50条错误，方便问题分析
+        window.errorLogs = [];
+        const MAX_ERROR_LOGS = 50;
+        
+        function addErrorLog(type, message, stack) {
+            const errorEntry = {
+                time: new Date().toLocaleString(),
+                type: type,
+                message: message,
+                stack: stack
+            };
+            window.errorLogs.unshift(errorEntry);
+            if (window.errorLogs.length > MAX_ERROR_LOGS) {
+                window.errorLogs.pop();
+            }
+            // 同时在控制台输出，方便开发者查看
+            console.log(`[${type}] ${message}`, stack);
+        }
+        
+        // 捕获同步错误 - 只记录不阻止，不干扰Wails框架
+        window.addEventListener('error', function(event) {
+            addErrorLog('Error', event.message, event.error ? event.error.stack : '');
+            // 返回false表示不阻止默认处理，让错误正常显示在控制台
+            return false;
+        });
+        
+        // 捕获异步Promise错误 - 只记录不阻止
+        window.addEventListener('unhandledrejection', function(event) {
+            const reason = event.reason;
+            const message = reason instanceof Error ? reason.message : String(reason);
+            const stack = reason instanceof Error ? reason.stack : '';
+            addErrorLog('Promise', message, stack);
+            // 不调用event.preventDefault()，让错误正常传播，不干扰Wails
+        });
+        
+        // 导出错误日志查看函数 - 可以在浏览器控制台调用查看错误历史
+        window.showErrorLogs = function() {
+            console.table(window.errorLogs);
+            return window.errorLogs;
+        };
+        
+        window.clearErrorLogs = function() {
+            window.errorLogs = [];
+            console.log('错误日志已清空');
+        };
+        
+        console.log('全局错误捕获已启用 - 调用 showErrorLogs() 查看错误历史');
+    </script>
+    <!-- 可视化调试面板 -->
+    <div id="debug-panel" style="position: fixed; bottom: 0; right: 0; width: 600px; max-height: 400px; background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', monospace; font-size: 12px; z-index: 9999; overflow-y: auto; border: 2px solid #0078d4; display: none;">
+        <div style="background: #0078d4; color: white; padding: 5px 10px; font-weight: bold; cursor: pointer;" onclick="toggleDebugPanel()">
+            📋 调试信息面板 (点击收起/展开)
+        </div>
+        <div id="debug-content" style="padding: 10px; max-height: 350px; overflow-y: auto;">
+            <div style="color: #888;">等待加载文件...</div>
+        </div>
+    </div>
+    
+    <script>
+        // 调试面板切换
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            const content = document.getElementById('debug-content');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                panel.style.maxHeight = '400px';
+            } else {
+                content.style.display = 'none';
+                panel.style.maxHeight = '30px';
+            }
+        }
+        
+        // 添加调试信息
+        window.addDebugInfo = function(category, message) {
+            const content = document.getElementById('debug-content');
+            const panel = document.getElementById('debug-panel');
+            
+            // 如果调试面板DOM元素还未准备好，静默返回（防止启动时崩溃）
+            if (!content || !panel) {
+                console.log('[调试日志-DOM未就绪]', category, message);
+                return;
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.style.cssText = 'margin: 2px 0; border-bottom: 1px solid #333; padding: 2px 0;';
+            line.innerHTML = `<span style="color: #888;">[${timestamp}]</span> <span style="color: #4fc1ff;">${category}:</span> ${message}`;
+            content.appendChild(line);
+            content.scrollTop = content.scrollHeight;
+            
+            // 显示面板
+            panel.style.display = 'block';
+        };
+        
+        // 清空调试信息
+        window.clearDebugInfo = function() {
+            document.getElementById('debug-content').innerHTML = '';
+        };
+        
+        // 【第三层防御】全局错误监控 - 兜底机制
+        // 说明：监控DOM中插入的Mermaid错误元素，自动清理
+        // 作用：作为最后的保险，捕获前两层防御漏掉的错误
+        window.addEventListener('DOMContentLoaded', function() {
+            const errorObserver = new MutationObserver(function(mutations) {
+                let cleanedAny = false;
+                
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            // 使用辅助函数检查并清理错误元素
+                            if (checkAndCleanupMermaidError(node)) {
+                                cleanedAny = true;
+                            }
+                            
+                            // 也检查子元素
+                            if (node.querySelectorAll) {
+                                const possibleErrorElements = node.querySelectorAll(
+                                    'svg, [id^="chart-"], [id^="dchart-"], [id^="ichart-"], .error-text'
+                                );
+                                possibleErrorElements.forEach(function(el) {
+                                    if (checkAndCleanupMermaidError(el)) {
+                                        cleanedAny = true;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+                
+                // 如果清理了任何错误元素，记录日志
+                if (cleanedAny) {
+                    console.log('【第三层防御】全局监控已自动清理错误元素');
+                }
+            });
+            
+            // 开始监控整个body
+            errorObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            console.log('【三层防御体系】全局错误监控已启动');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+/* Mermaid 主题样式 */
+
+/* 默认主题 */
+.mermaid {
+    font-family: 'trebuchet ms', verdana, arial, sans-serif;
+    font-size: 14px;
+    background-color: transparent;
+}
+
+/* 流程图样式 */
+.flowchart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flowchart-label {
+    font-size: 14px;
+    font-weight: normal;
+    fill: #333;
+    color: #333;
+}
+
+.flowchart-node {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.flowchart-edge {
+    stroke: #333;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+/* 序列图样式 */
+.sequence-diagram {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.sequence-label {
+    font-size: 12px;
+    font-weight: normal;
+    fill: #333;
+    color: #333;
+}
+
+.sequence-participant {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.sequence-message {
+    stroke: #333;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+/* 甘特图样式 */
+.gantt {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.gantt-label {
+    font-size: 12px;
+    font-weight: normal;
+    fill: #333;
+    color: #333;
+}
+
+.gantt-task {
+    fill: #3498db;
+    opacity: 0.8;
+    stroke: #2980b9;
+    stroke-width: 1;
+}
+
+.gantt-today {
+    stroke: #e74c3c;
+    stroke-width: 2;
+    fill: none;
+    opacity: 0.5;
+}
+
+/* 饼图样式 */
+.pie {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pie-slice {
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+.pie-label {
+    font-size: 12px;
+    font-weight: normal;
+    fill: #333;
+    color: #333;
+}
+
+/* 类图样式 */
+.class {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.class-rect {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.class-label {
+    font-size: 12px;
+    font-weight: normal;
+    fill: #333;
+    color: #333;
+}
+
+/* 状态图样式 */
+.state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.state-node {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.state-edge {
+    stroke: #333;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+/* 实体关系图样式 */
+.er {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.er-rect {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.er-edge {
+    stroke: #333;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+/* 用户旅程图样式 */
+.user {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-node {
+    stroke: #333;
+    stroke-width: 2;
+    fill: #fff;
+    opacity: 0.9;
+}
+
+.user-edge {
+    stroke: #333;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+/* 主题变量 */
+:root {
+    --primary-color: #3498db;
+    --primary-dark: #2980b9;
+    --primary-light: #5dade2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #17a2b8;
+    --text-color: #333;
+    --text-light: #666;
+    --border-color: #e2e2e2;
+    --background-color: #f8f9fa;
+    --card-background: #fff;
+}
+
+/* 深色主题 */
+body.dark .mermaid {
+    font-family: 'trebuchet ms', verdana, arial, sans-serif;
+    font-size: 14px;
+    background-color: transparent;
+}
+
+body.dark .flowchart-label,
+body.dark .sequence-label,
+body.dark .gantt-label,
+body.dark .pie-label,
+body.dark .class-label,
+body.dark .state-label,
+body.dark .er-label,
+body.dark .user-label {
+    fill: #e2e8f0;
+    color: #e2e8f0;
+}
+
+body.dark .flowchart-node,
+body.dark .sequence-participant,
+body.dark .gantt-task,
+body.dark .class-rect,
+body.dark .state-node,
+body.dark .er-rect,
+body.dark .user-node {
+    stroke: #e2e8f0;
+    fill: #4a5568;
+    opacity: 0.9;
+}
+
+body.dark .flowchart-edge,
+body.dark .sequence-message,
+body.dark .gantt-today,
+body.dark .state-edge,
+body.dark .er-edge,
+body.dark .user-edge {
+    stroke: #e2e8f0;
+    fill: none;
+}
+
+body.dark .pie-slice {
+    stroke: #2d3748;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .mermaid {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mermaid {
+        font-size: 10px;
+    }
+}
+
+/* 动画效果 */
+.mermaid .animated {
+    transition: all 0.3s ease;
+}
+
+.mermaid .hover-effect:hover {
+    opacity: 1 !important;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+/* 打印样式 */
+@media print {
+    .mermaid {
+        font-size: 12px;
+        background-color: white;
+    }
+    
+    .mermaid * {
+        stroke: black !important;
+        fill: white !important;
+        color: black !important;
+    }
+}
