@@ -39,3 +39,6 @@ backup*/
 *.tmp
 *.swp
 *~
+
+# 本地历史测试代码（不推送到GitHub）
+tests/legacy/
